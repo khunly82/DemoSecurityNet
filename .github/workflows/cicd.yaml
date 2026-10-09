@@ -2,10 +2,69 @@ name: Cicd
 on:
     push:
         branches: [main]
+
 jobs:
     sonar:
         runs-on: ubuntu-latest
+        services:
+            sonarqube:
+                image: sonarqube:lts-community
+                ports:
+                    - 9000:9000
+                options: >-
+                    --health-cmd "curl -s http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 15
         steps:
             - name: Checkout
               uses: actions/checkout@v7
-            - run: ls -la
+            - name: Setup .Net
+              uses: actions/setup-dotnet@v6
+              with:
+                dotnet-version: '8.0.x'
+            - name: Install dependencies (Java & Curl/JQ)
+              run: |
+                apt-get update
+                apt-get install -y openjdk-17-jre-headless curl jq
+
+            - name: Generate SonarQube Token via API
+              run: |
+                SONAR_URL="http://sonarqube:9000"
+            
+                # 1. Changer le mot de passe admin par défaut (exigé au premier démarrage)
+                curl -s -u admin:admin -X POST "$SONAR_URL/api/users/change_password?login=admin&previousPassword=admin&password=NewSecurePassword123!"
+            
+                # 2. Générer un nouveau token d'analyse pour l'utilisateur admin
+                TOKEN_RESPONSE=$(curl -s -u admin:NewSecurePassword123! -X POST "$SONAR_URL/api/user_tokens/generate?name=github-actions-token&type=GLOBAL_ANALYSIS")
+            
+                # 3. Extraire la valeur du token
+                SONAR_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.token')
+            
+                # 4. Exporter le token pour les étapes suivantes de la job
+                echo "SONAR_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
+
+            - name: Install SonarScanner for .NET
+              run: |
+                dotnet tool install --global dotnet-sonarscanner
+                echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+            - name: Begin SonarQube analysis
+              run: |
+                dotnet-sonarscanner begin \
+                /k:"DemoSecurity" \
+                /d:sonar.token="${{ env.SONAR_TOKEN }}" \
+                /d:sonar.host.url="http://sonarqube:9000"
+
+            - name: Restore nugget
+              run: dotnet restore
+            - name: Build application
+              run: dotnet build --configuration Release
+
+            - name: End SonarQube analysis
+              run: |
+                dotnet-sonarscanner end \
+                    /d:sonar.token="${{ env.SONAR_TOKEN }}"
+        
+
+    
