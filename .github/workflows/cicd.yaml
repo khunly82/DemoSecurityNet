@@ -18,5 +18,11 @@ jobs:
               run: echo 43
             - name: step 2
               run: echo "Khun"
+    job3:
+        runs-on: ubuntu-latest
+        needs: [job1, job2]
+        steps:
+            - name: final step
+              run: echo "c'est fini !!"
 
 
