@@ -36,31 +36,31 @@ jobs:
           done
           echo "SonarQube n'a pas démarré"; exit 1
 
-            - name: Generate SonarQube Token via API
-              run: |
-                set -o pipefail
-                NEW_PWD='NewSecurePassword123!'
+      - name: Generate SonarQube Token via API
+        run: |
+            set -o pipefail
+            NEW_PWD='NewSecurePassword123!'
 
-                curl -sf -u admin:admin -X POST \
-                    "$SONAR_URL/api/users/change_password" \
-                    --data-urlencode "login=admin" \
-                    --data-urlencode "previousPassword=admin" \
-                    --data-urlencode "password=$NEW_PWD"
+            curl -sf -u admin:admin -X POST \
+                "$SONAR_URL/api/users/change_password" \
+                --data-urlencode "login=admin" \
+                --data-urlencode "previousPassword=admin" \
+                --data-urlencode "password=$NEW_PWD"
 
-                RESPONSE=$(curl -s -w '\n%{http_code}' -u "admin:$NEW_PWD" -X POST \
-                    "$SONAR_URL/api/user_tokens/generate" \
-                    --data-urlencode "name=github-actions-token" \
-                    --data-urlencode "type=GLOBAL_ANALYSIS_TOKEN")
-                HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-                BODY=$(echo "$RESPONSE" | sed '$d')
+            RESPONSE=$(curl -s -w '\n%{http_code}' -u "admin:$NEW_PWD" -X POST \
+                "$SONAR_URL/api/user_tokens/generate" \
+                --data-urlencode "name=github-actions-token" \
+                --data-urlencode "type=GLOBAL_ANALYSIS_TOKEN")
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
 
-                if [ "$HTTP_CODE" != "200" ]; then
-                    echo "Échec de génération du token (HTTP $HTTP_CODE) : $BODY"; exit 1
-                fi
+            if [ "$HTTP_CODE" != "200" ]; then
+                echo "Échec de génération du token (HTTP $HTTP_CODE) : $BODY"; exit 1
+            fi
 
-                TOKEN=$(echo "$BODY" | jq -r '.token')
-                echo "::add-mask::$TOKEN"
-                echo "SONAR_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+            TOKEN=$(echo "$BODY" | jq -r '.token')
+            echo "::add-mask::$TOKEN"
+            echo "SONAR_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
       - name: Install SonarScanner for .NET
         run: |
