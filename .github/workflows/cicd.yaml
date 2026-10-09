@@ -96,14 +96,12 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Publish application
-        run: dotnet publish "$APP_PROJECT" -c Release -o ./publish
+        run: dotnet publish DemoSecurity -c Release -o ./publish
 
       - name: Démarrer l'application
         env:
           ASPNETCORE_ENVIRONMENT: Development   # expose Swagger si configuré
-        run: |
-          DLL=$(basename "$APP_PROJECT" .csproj).dll
-          nohup dotnet "./publish/$DLL" > app.log 2>&1 &
+        run: nohup dotnet "./publish/DemoSecurity.dll" > app.log 2>&1 &
 
       - name: Attendre que l'application réponde
         run: |
@@ -128,3 +126,5 @@ jobs:
       - name: Logs de l'application
         if: always()
         run: cat app.log
+#   deploy: deploiement sur le serveur (ex: azure) (needs: [zap, sonar])
+    
