@@ -7,4 +7,5 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              run: ls -la # lister tous les fichiers qui sont sur le runner
+              uses: actions/checkout@v7
+            - run: ls -la
