@@ -1,0 +1,22 @@
+name: Build, test and deploy of asp app
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches:
+            - main
+jobs:
+    job1:
+        runs-on: ubuntu-latest
+        steps:
+            - name: step 1
+              run: echo 42
+    job2:
+        runs-on: ubuntu-latest
+        steps:
+            - name: step 1
+              run: echo 43
+            - name: step 2
+              run: echo "Khun"
+
+

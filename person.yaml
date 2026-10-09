@@ -1,0 +1,10 @@
+id: 42
+nom: LY 
+prenom: Khun
+competences:
+  - nom: c#
+    niveau: 3
+  - nom: java
+    niveau: 2
+  - nom: php
+    niveau: 1

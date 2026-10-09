@@ -1,0 +1,10 @@
+{
+    "id": 42,
+    "nom": "Ly",
+    "prenom": "Khun",
+    "competences": [
+        { "nom": "C#", "niveau": 3 },
+        { "nom": "JAVA", "niveau": 1 },
+        { "nom": "PHP", "niveau": 2 }
+    ]
+}
