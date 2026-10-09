@@ -1,0 +1,6 @@
+@DemoSecurity_HostAddress = http://localhost:5064
+
+GET {{DemoSecurity_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
