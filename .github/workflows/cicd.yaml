@@ -82,3 +82,49 @@ jobs:
 
       - name: End SonarQube analysis
         run: dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+  zap:
+    runs-on: ubuntu-latest
+    needs: sonar
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish application
+        run: dotnet publish "$APP_PROJECT" -c Release -o ./publish
+
+      - name: Démarrer l'application
+        env:
+          ASPNETCORE_ENVIRONMENT: Development   # expose Swagger si configuré
+        run: |
+          DLL=$(basename "$APP_PROJECT" .csproj).dll
+          nohup dotnet "./publish/$DLL" > app.log 2>&1 &
+
+      - name: Attendre que l'application réponde
+        run: |
+          for i in $(seq 1 30); do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL" || true)
+            if [ "$CODE" != "000" ]; then
+              echo "Application prête (HTTP $CODE)"; exit 0
+            fi
+            echo "En attente... ($i)"; sleep 2
+          done
+          echo "L'application n'a pas démarré"; cat app.log; exit 1
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: http://localhost:5064/swagger/v1/swagger.json
+          cmd_options: '-a'                 # inclut les règles alpha
+          allow_issue_writing: false        # pas d'issue GitHub créée
+          fail_action: false                # passer à true pour bloquer sur alerte
+          artifact_name: zap-report
+
+      - name: Logs de l'application
+        if: always()
+        run: cat app.log
