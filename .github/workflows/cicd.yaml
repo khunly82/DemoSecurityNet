@@ -106,7 +106,7 @@ jobs:
       - name: Attendre que l'application réponde
         run: |
           for i in $(seq 1 30); do
-            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL" || true)
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:5064/swagger/v1/swagger.json" || true)
             if [ "$CODE" != "000" ]; then
               echo "Application prête (HTTP $CODE)"; exit 0
             fi
